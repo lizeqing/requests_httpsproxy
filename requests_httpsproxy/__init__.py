@@ -21,7 +21,6 @@ from requests.packages.urllib3.util.url import parse_url
 from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
 
 import base64
-import re
 import functools
 import tlslite
 import OpenSSL.crypto
@@ -47,9 +46,8 @@ def tlslite_getpeercert(conn):
             extension = x509.get_extension(i)
             if extension.get_short_name() == b'subjectAltName':
                 cert['subjectAltName'] = []
-                for c, name in re.findall(br'(?s)\x82(.)([a-z0-9\\.\\-\\*_]+)', extension.get_data()):
-                    if ord(c) == len(name):
-                        cert['subjectAltName'].append(('DNS', name.decode()))
+                for p in extension.get_data().split(b'\x82')[1:]:
+                    cert['subjectAltName'].append(('DNS', p[1:].decode()))
         conn._peercert = cert
     return conn._peercert
 
